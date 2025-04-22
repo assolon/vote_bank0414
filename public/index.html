@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote-Bank</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Vote-Bank">
+    <link rel="apple-touch-icon" href="icons/icon-152x152.png">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+    <script src="script.js"></script>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-container">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Ccircle cx='25' cy='25' r='23' fill='none' stroke='%232196F3' stroke-width='2'/%3E%3Cpath d='M25 10 L25 40' stroke='%232196F3' stroke-width='2'/%3E%3Cpath d='M15 22 L35 22' stroke='%232196F3' stroke-width='2'/%3E%3Cpath d='M15 28 L35 28' stroke='%232196F3' stroke-width='2'/%3E%3Ccircle cx='25' cy='25' r='5' fill='%232196F3'/%3E%3C/svg%3E" 
+                 class="logo" 
+                 alt="Vote-Bank Logo">
+            <h1 class="title">Vote-Bank</h1>
+        </div>
+    </div>
+
+    <div id="admin-section" class="hidden">
+        <div class="vote-form">
+            <input type="text" id="question" placeholder="투표 제목을 입력하세요">
+            <div class="input-row">
+                <input type="text" id="optionA" placeholder="옵션 A를 입력하세요">
+                <input type="text" id="optionB" placeholder="옵션 B를 입력하세요">
+            </div>
+            <div class="input-row">
+                <input type="datetime-local" id="startTime" placeholder="노출 시작일시">
+                <input type="datetime-local" id="endTime" placeholder="노출 마감일시">
+            </div>
+            <button onclick="saveVote()">저장</button>
+        </div>
+        <div class="vote-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>투표명/투표기간</th>
+                        <th>A항목</th>
+                        <th>B항목</th>
+                        <th>투표결과(A)</th>
+                        <th>투표결과(B)</th>
+                        <th>관리</th>
+                    </tr>
+                </thead>
+                <tbody id="voteListBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="user-section">
+        <div class="vote-container">
+            <h2 id="currentQuestion"></h2>
+            <div class="vote-period-container">
+                <div class="vote-period-label">투표기간</div>
+                <div id="votePeriod" class="vote-period"></div>
+            </div>
+            <div class="vote-options">
+                <button onclick="selectOption('A')" id="optionAButton" class="vote-circle pink"></button>
+                <button onclick="selectOption('B')" id="optionBButton" class="vote-circle blue"></button>
+            </div>
+            
+            <div class="user-info-form">
+                <div class="gender-buttons">
+                    <button onclick="selectGender('남자')" class="gender-btn" id="maleBtn">남자</button>
+                    <button onclick="selectGender('여자')" class="gender-btn" id="femaleBtn">여자</button>
+                </div>
+                <select id="ageGroup" class="age-select">
+                    <option value="" disabled selected>연령대</option>
+                    <option value="10대">10대</option>
+                    <option value="20대">20대</option>
+                    <option value="30대">30대</option>
+                    <option value="40대">40대</option>
+                    <option value="50대">50대</option>
+                    <option value="60대이상">60대이상</option>
+                </select>
+                <button onclick="submitVote()" class="submit-btn">저장</button>
+            </div>
+
+            <div class="result-graph hidden">
+                <div class="bar-container">
+                    <div id="barA" class="bar"></div>
+                    <div id="barB" class="bar"></div>
+                </div>
+                <div class="vote-counts">
+                    <span id="countA">0표</span>
+                    <span id="countB">0표</span>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button class="previous-votes-btn" onclick="showPreviousVotes()">이전투표</button>
+                <button class="upcoming-votes-btn" onclick="showUpcomingVotes()">향후투표일정</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="previousVotesModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>이전 투표 목록</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>투표명</th>
+                        <th>A</th>
+                        <th>B</th>
+                        <th>A결과</th>
+                        <th>B결과</th>
+                    </tr>
+                </thead>
+                <tbody id="previousVotesBody"></tbody>
+            </table>
+            <button class="close-btn" onclick="closePreviousVotes()">닫기</button>
+        </div>
+    </div>
+
+    <div id="voteDetailsModal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="voteDetailTitle"></h2>
+            <div class="vote-stats-container">
+                <div class="vote-option-stats">
+                    <h3 id="optionATitle"></h3>
+                    <div class="vote-count-total"></div>
+                    <table class="stats-table">
+                        <tr>
+                            <th colspan="7">남자</th>
+                        </tr>
+                        <tr>
+                            <td>10대</td>
+                            <td>20대</td>
+                            <td>30대</td>
+                            <td>40대</td>
+                            <td>50대</td>
+                            <td>60대이상</td>
+                            <td>소계</td>
+                        </tr>
+                        <tr id="optionAMaleStats">
+                            <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+                        </tr>
+                        <tr>
+                            <th colspan="7">여자</th>
+                        </tr>
+                        <tr>
+                            <td>10대</td>
+                            <td>20대</td>
+                            <td>30대</td>
+                            <td>40대</td>
+                            <td>50대</td>
+                            <td>60대이상</td>
+                            <td>소계</td>
+                        </tr>
+                        <tr id="optionAFemaleStats">
+                            <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="vote-option-stats">
+                    <h3 id="optionBTitle"></h3>
+                    <div class="vote-count-total"></div>
+                    <table class="stats-table">
+                        <tr>
+                            <th colspan="7">남자</th>
+                        </tr>
+                        <tr>
+                            <td>10대</td>
+                            <td>20대</td>
+                            <td>30대</td>
+                            <td>40대</td>
+                            <td>50대</td>
+                            <td>60대이상</td>
+                            <td>소계</td>
+                        </tr>
+                        <tr id="optionBMaleStats">
+                            <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+                        </tr>
+                        <tr>
+                            <th colspan="7">여자</th>
+                        </tr>
+                        <tr>
+                            <td>10대</td>
+                            <td>20대</td>
+                            <td>30대</td>
+                            <td>40대</td>
+                            <td>50대</td>
+                            <td>60대이상</td>
+                            <td>소계</td>
+                        </tr>
+                        <tr id="optionBFemaleStats">
+                            <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <button class="close-btn" onclick="closeVoteDetails()">닫기</button>
+        </div>
+    </div>
+
+    <!-- 향후 투표 일정 모달 -->
+    <div id="upcomingVotesModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>향후 투표 일정</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>투표명</th>
+                        <th>투표기간</th>
+                        <th>A</th>
+                        <th>B</th>
+                    </tr>
+                </thead>
+                <tbody id="upcomingVotesList"></tbody>
+            </table>
+            <button class="close-btn" onclick="closeUpcomingVotes()">닫기</button>
+        </div>
+    </div>
+</body>
+</html>

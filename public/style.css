@@ -1,0 +1,873 @@
+/* Reset CSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* 공통 스타일 */
+.hidden {
+    display: none !important;
+}
+
+/* 헤더 스타일 */
+.header {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 40px;
+    background-color: white;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.logo-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo {
+    width: 50px;
+    height: 50px;
+}
+
+.title {
+    font-size: 32px;
+    color: #2196F3;
+    margin: 0;
+    font-weight: bold;
+}
+
+/* 투표 옵션 스타일 */
+.vote-options {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 40px 0;
+    padding: 0 20px;
+}
+
+.vote-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.pink {
+    background: #FF9E9E;
+}
+
+.blue {
+    background: #8CB4FF;
+}
+
+.vote-circle:hover {
+    transform: scale(1.05);
+}
+
+.vote-circle.selected {
+    transform: scale(1.1);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    100% {
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.pink.selected {
+    background: #FF8787;
+    box-shadow: 0 8px 20px rgba(255, 135, 135, 0.3);
+}
+
+.blue.selected {
+    background: #6B9FFF;
+    box-shadow: 0 8px 20px rgba(107, 159, 255, 0.3);
+}
+
+/* 그래프 스타일 */
+.result-graph {
+    max-width: 600px;
+    margin: 30px auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.result-graph.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.bar-container {
+    height: 40px;
+    background: #e9ecef;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.bar {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    transition: width 0.5s ease;
+}
+
+#barA {
+    background-color: #ff6b6b;
+    position: absolute;
+    left: 0;
+    z-index: 2;
+}
+
+#barB {
+    background-color: #339af0;
+    position: absolute;
+    right: 0;
+    z-index: 1;
+}
+
+.vote-counts {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 0 10px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* 관리자 페이지 스타일 */
+#admin-section {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.vote-form {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.vote-form .input-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.vote-form .input-row input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.vote-form input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.vote-form button {
+    background-color: #2196F3;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+}
+
+.vote-form button:hover {
+    background-color: #1976D2;
+}
+
+/* 투표 목록 테이블 스타일 */
+.vote-list {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    overflow-x: auto;
+}
+
+.vote-list table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.vote-list th,
+.vote-list td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.vote-list th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #495057;
+}
+
+.vote-list tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* 반응형 스타일 */
+@media screen and (max-width: 768px) {
+    .vote-options {
+        gap: 20px;
+    }
+
+    .vote-circle {
+        width: 200px;
+        height: 200px;
+        font-size: 20px;
+    }
+
+    .vote-form input,
+    .vote-form button {
+        font-size: 14px;
+    }
+
+    .vote-list th,
+    .vote-list td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    #currentQuestion {
+        font-size: 20px;
+    }
+
+    .vote-counts {
+        font-size: 16px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .vote-options {
+        gap: 15px;
+    }
+
+    .vote-circle {
+        width: 150px;
+        height: 150px;
+        font-size: 18px;
+    }
+}
+
+/* 모달 스타일 */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal:not(.hidden) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h2 {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.modal-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.modal-content th,
+.modal-content td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+}
+
+.modal-content th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #495057;
+}
+
+.modal-content tr:hover {
+    background-color: #f8f9fa;
+}
+
+.close-btn {
+    display: block;
+    width: 100px;
+    margin: 20px auto 0;
+    padding: 8px 16px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.close-btn:hover {
+    background-color: #5a6268;
+}
+
+/* 투표 결과 승리 항목 스타일 */
+.winning-result {
+    color: #2196F3;
+    font-weight: bold;
+}
+
+/* 관리 버튼 스타일 */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.edit-btn, .delete-btn, .end-vote-btn {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.edit-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: #45a049;
+}
+
+.delete-btn {
+    background-color: #f44336;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #da190b;
+}
+
+.end-vote-btn {
+    background-color: #ff9800;
+    color: white;
+}
+
+.end-vote-btn:hover {
+    background-color: #f57c00;
+}
+
+/* 투표 컨테이너 스타일 */
+.vote-container {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+#currentQuestion {
+    font-size: 24px;
+    margin-bottom: 30px;
+    color: #333;
+    text-align: center;
+}
+
+.previous-votes-btn {
+    margin: 30px auto;
+    padding: 12px 24px;
+    background-color: #495057;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    display: block;
+}
+
+.end-vote-btn {
+    background-color: #dc3545;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.end-vote-btn:hover {
+    background-color: #c82333;
+}
+
+/* 사용자 정보 폼 스타일 */
+.user-info-form {
+    margin: 30px auto;
+    max-width: 400px;
+    text-align: center;
+}
+
+.gender-buttons {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.gender-btn {
+    padding: 10px 30px;
+    border: 2px solid #98D8BF;
+    border-radius: 8px;
+    background: #EFFAF6;
+    color: #2E856E;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gender-btn:hover {
+    background: #98D8BF;
+    color: white;
+}
+
+.gender-btn.selected {
+    background: #98D8BF;
+    color: white;
+    border-color: #98D8BF;
+}
+
+.age-select {
+    width: 200px;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 16px;
+    color: #495057;
+    background-color: white;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23495057' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+    text-align: center;
+    text-align-last: center;
+}
+
+.age-select option {
+    text-align: center;
+}
+
+.age-select:focus {
+    border-color: #2196F3;
+    outline: none;
+}
+
+.submit-btn {
+    padding: 12px 40px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-btn:hover {
+    background-color: #1976D2;
+}
+
+.submit-btn:disabled {
+    background-color: #dee2e6;
+    cursor: not-allowed;
+}
+
+/* 투표 상세 통계 스타일 */
+.vote-stats-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.vote-option-stats {
+    flex: 1;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.vote-option-stats h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.vote-count-total {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2196F3;
+    margin-bottom: 15px;
+}
+
+.stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.stats-table th {
+    background-color: #e9ecef;
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+}
+
+.stats-table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #dee2e6;
+}
+
+.stats-table tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.stats-table tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* 투표 목록 클릭 가능 스타일 */
+.vote-list tbody tr {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.vote-list tbody tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* 다음 투표 정보 스타일 */
+.next-vote-info {
+    margin: 20px auto;
+    padding: 15px;
+    background-color: #e3f2fd;
+    border-radius: 8px;
+    color: #1976D2;
+    font-size: 16px;
+    text-align: center;
+    max-width: 400px;
+}
+
+/* 비활성화된 투표 버튼 스타일 */
+.vote-circle:disabled {
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.vote-circle:disabled:hover {
+    transform: none !important;
+}
+
+/* 모바일 화면에서 세로 배치 */
+@media screen and (max-width: 768px) {
+    .vote-stats-container {
+        flex-direction: column;
+    }
+
+    .vote-option-stats {
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+
+    .vote-option-stats:last-child {
+        margin-bottom: 0;
+    }
+
+    .modal-content {
+        padding: 15px;
+        width: 95%;
+        max-width: 400px;
+    }
+
+    .stats-table {
+        font-size: 12px;
+        width: 100%;
+        min-width: unset;
+    }
+
+    .stats-table th,
+    .stats-table td {
+        padding: 6px 4px;
+    }
+
+    .vote-option-stats h3 {
+        font-size: 14px;
+        margin-bottom: 10px;
+    }
+
+    .vote-count-total {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+}
+
+.vote-period-container {
+    text-align: center;
+    margin: 10px auto 20px;
+}
+
+.vote-period-label {
+    font-weight: bold;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.vote-period {
+    color: #666;
+    font-size: 0.9em;
+    background-color: #FFF9C4;
+    padding: 8px 16px;
+    border-radius: 20px;
+    display: inline-block;
+    word-break: keep-all;
+    line-height: 1.4;
+}
+
+.upcoming-vote-item {
+    background-color: #fff;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.upcoming-vote-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+@media screen and (max-width: 768px) {
+    .vote-period {
+        font-size: 0.85em;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .upcoming-vote-title {
+        font-size: 16px;
+    }
+}
+
+/* 투표 목록 테이블의 기간 셀 스타일 */
+.vote-list td:first-child {
+    white-space: normal;
+    line-height: 1.5;
+    min-width: 200px;
+}
+
+@media screen and (max-width: 768px) {
+    .vote-period, .upcoming-vote-period {
+        font-size: 0.8em;
+        padding: 6px 12px;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .vote-list td:first-child {
+        min-width: 150px;
+        font-size: 0.9em;
+    }
+}
+
+/* 향후 투표 일정 버튼 스타일 */
+.upcoming-votes-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 10px;
+    font-size: 16px;
+}
+
+.upcoming-votes-btn:hover {
+    background-color: #45a049;
+}
+
+/* 향후 투표 일정 모달 스타일 */
+#upcomingVotesModal .modal-content {
+    max-width: 800px;
+}
+
+.upcoming-vote-period {
+    color: #666;
+    font-size: 14px;
+    margin: 8px 0;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.upcoming-vote-period br {
+    display: block;
+    content: "";
+    margin-top: 4px;
+}
+
+.no-upcoming-votes {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 20px;
+}
+
+@media screen and (max-width: 768px) {
+    .modal-content th,
+    .modal-content td {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .modal-content td {
+        word-break: keep-all;
+    }
+}
+
+/* 버튼 컨테이너 스타일 */
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 30px auto;
+    width: 100%;
+    max-width: 600px;
+}
+
+.previous-votes-btn,
+.upcoming-votes-btn {
+    flex: 1;
+    margin: 0;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.previous-votes-btn {
+    background-color: #495057;
+    color: white;
+}
+
+.previous-votes-btn:hover {
+    background-color: #3c4146;
+}
+
+.upcoming-votes-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.upcoming-votes-btn:hover {
+    background-color: #45a049;
+}
+
+/* 관리자 투표 목록 스타일 */
+.vote-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.vote-period-admin {
+    font-size: 0.9em;
+    color: #666;
+    background-color: #f8f9fa;
+    padding: 3px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* 모바일 대응 */
+@media screen and (max-width: 768px) {
+    .vote-title {
+        font-size: 0.95em;
+        margin-bottom: 4px;
+    }
+    
+    .vote-period-admin {
+        font-size: 0.85em;
+    }
+}
