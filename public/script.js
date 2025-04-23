@@ -11,14 +11,29 @@ const firebaseConfig = {
 
 // Service Worker 등록
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-                console.log('ServiceWorker registration successful');
-            })
-            .catch(err => {
-                console.log('ServiceWorker registration failed: ', err);
+    window.addEventListener('load', async () => {
+        try {
+            // 기존 서비스워커 제거
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                await registration.unregister();
+            }
+            
+            // 새로운 서비스워커 등록
+            const registration = await navigator.serviceWorker.register('/service-worker.js');
+            console.log('ServiceWorker registration successful');
+            
+            // 업데이트 확인 및 강제 새로고침
+            if (registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+            
+            registration.addEventListener('activate', () => {
+                window.location.reload();
             });
+        } catch (err) {
+            console.log('ServiceWorker registration failed: ', err);
+        }
     });
 }
 
@@ -281,8 +296,8 @@ async function loadVoteList() {
 
             const leftVotes = vote.votesA || 0;
             const rightVotes = vote.votesB || 0;
-            const leftPercentage = calculatePercentage(leftVotes, rightVotes);
-            const rightPercentage = calculatePercentage(rightVotes, leftVotes);
+            let leftPercentage = calculatePercentage(leftVotes, rightVotes);
+            let rightPercentage = 100 - leftPercentage;
             
             // 결과 셀 스타일링을 위한 클래스 추가
             const leftResultClass = leftPercentage > rightPercentage ? 'winning-result' : '';
@@ -695,26 +710,32 @@ async function endVote(voteId) {
 // 결과 업데이트 함수
 function updateResults(votesA, votesB) {
     const total = votesA + votesB;
-    const percentageA = total === 0 ? 50 : (votesA / total) * 100;
-    const percentageB = total === 0 ? 50 : (votesB / total) * 100;
+    let percentageA = total === 0 ? 50 : (votesA / total) * 100;
+    let percentageB = total === 0 ? 50 : (votesB / total) * 100;
+
+    // 퍼센트 반올림 및 합계 100% 맞추기
+    percentageA = Math.round(percentageA);
+    percentageB = 100 - percentageA;
 
     const barA = document.getElementById('barA');
     const barB = document.getElementById('barB');
     
-        barA.style.width = `${percentageA}%`;
-        barB.style.width = `${percentageB}%`;
+    barA.style.width = `${percentageA}%`;
+    barB.style.width = `${percentageB}%`;
 
-    barA.textContent = `${Math.round(percentageA)}%`;
-    barB.textContent = `${Math.round(percentageB)}%`;
+    barA.textContent = `${percentageA}%`;
+    barB.textContent = `${percentageB}%`;
 
-    document.getElementById('countA').textContent = `${votesA}표`;
-    document.getElementById('countB').textContent = `${votesB}표`;
+    // 투표 수 표시 제거
+    document.getElementById('countA').textContent = '';
+    document.getElementById('countB').textContent = '';
 }
 
 // 퍼센트 계산 함수
 function calculatePercentage(votes, otherVotes) {
     const total = votes + otherVotes;
-    return total === 0 ? 0 : Math.round((votes / total) * 100);
+    if (total === 0) return 0;
+    return Math.round((votes / total) * 100);
 }
 
 // 이전 투표 보기 함수
@@ -756,21 +777,21 @@ async function showPreviousVotes() {
                 // A 결과
                 const aResultCell = document.createElement('td');
                 const totalVotes = (vote.votesA || 0) + (vote.votesB || 0);
-                const aPercentage = totalVotes > 0 ? Math.round((vote.votesA || 0) / totalVotes * 100) : 0;
                 const aVotes = vote.votesA || 0;
+                let aPercentage = totalVotes > 0 ? Math.round((aVotes / totalVotes) * 100) : 0;
                 const aText = `${aVotes} (${aPercentage}%)`;
                 aResultCell.textContent = aText;
-                if (aPercentage > (vote.votesB || 0) / totalVotes * 100) {
-                    aResultCell.style.color = '#2196F3';
-                }
                 
                 // B 결과
                 const bResultCell = document.createElement('td');
-                const bPercentage = totalVotes > 0 ? Math.round((vote.votesB || 0) / totalVotes * 100) : 0;
                 const bVotes = vote.votesB || 0;
+                const bPercentage = 100 - aPercentage;
                 const bText = `${bVotes} (${bPercentage}%)`;
                 bResultCell.textContent = bText;
-                if (bPercentage > aPercentage) {
+                
+                if (aPercentage > bPercentage) {
+                    aResultCell.style.color = '#2196F3';
+                } else if (bPercentage > aPercentage) {
                     bResultCell.style.color = '#2196F3';
                 }
                 

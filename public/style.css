@@ -160,7 +160,7 @@ body {
 }
 
 .vote-counts {
-    display: flex;
+    display: none;  /* 투표 수 표시 숨김 */
     justify-content: space-between;
     margin-top: 10px;
     padding: 0 10px;
