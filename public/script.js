@@ -134,6 +134,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (ageSelect) {
         ageSelect.addEventListener('change', checkSubmitButton);
     }
+
+    if (!isAdmin) {
+        document.body.addEventListener('submit', async function(e) {
+            if (e.target && e.target.id === 'voteRequestForm') {
+                e.preventDefault();
+                const requestData = {
+                    question: document.getElementById('requestTitle').value,
+                    optionA: document.getElementById('requestOptionA').value,
+                    optionB: document.getElementById('requestOptionB').value,
+                    registerId: document.getElementById('requestRegisterId').value,
+                    status: '신청',
+                    votesA: 0,
+                    votesB: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                try {
+                    await db.collection('votes').add(requestData);
+                    alert('투표가 성공적으로 신청되었습니다.');
+                    closeVoteRequest();
+                    if (isAdmin) {
+                        loadVoteList();
+                    }
+                } catch (error) {
+                    console.error('Error submitting vote request:', error);
+                    alert('투표 신청 중 오류가 발생했습니다.');
+                }
+            }
+        });
+    }
 });
 
 // 관리자 폼 초기화 함수
@@ -326,6 +355,7 @@ async function loadVoteList() {
                 </td>
                 <td>${vote.optionA}</td>
                 <td>${vote.optionB}</td>
+                <td>${vote.registerId || ''}</td>
                 <td class="${leftResultClass}">${leftVotes} (${leftPercentage}%)</td>
                 <td class="${rightResultClass}">${rightVotes} (${rightPercentage}%)</td>
                 <td>
@@ -1202,37 +1232,12 @@ function closeVoteRequest() {
     if (modal) {
         modal.classList.add('hidden');
         modal.style.display = 'none';
-        document.getElementById('voteRequestForm').reset();
+        var voteRequestForm = document.getElementById('voteRequestForm');
+        if (voteRequestForm) {
+            voteRequestForm.reset();
+        }
     }
 }
-
-// 투표 신청 처리
-document.getElementById('voteRequestForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const requestData = {
-        question: document.getElementById('requestTitle').value,
-        optionA: document.getElementById('requestOptionA').value,
-        optionB: document.getElementById('requestOptionB').value,
-        registerId: document.getElementById('requestRegisterId').value,
-        status: '신청',
-        votesA: 0,
-        votesB: 0,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    try {
-        await db.collection('votes').add(requestData);
-        alert('투표가 성공적으로 신청되었습니다.');
-        closeVoteRequest();
-        if (isAdmin) {
-            loadVoteList();
-        }
-    } catch (error) {
-        console.error('Error submitting vote request:', error);
-        alert('투표 신청 중 오류가 발생했습니다.');
-    }
-});
 
 // KakaoTalk Share
 function shareKakao() {
