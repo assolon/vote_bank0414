@@ -15,6 +15,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
     <script src="script.js"></script>
+    <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+    <script>
+        // 카카오 SDK 초기화
+        Kakao.init('bcc47e7ea05d7344efba81c6be02c0ec');
+    </script>
 </head>
 <body>
     <div class="header">
@@ -24,6 +29,11 @@
                  alt="Vote-Bank Logo">
             <h1 class="title">Vote-Bank</h1>
         </div>
+        <button id="shareButton" class="share-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8C19.6569 8 21 6.65685 21 5C21 3.34315 19.6569 2 18 2C16.3431 2 15 3.34315 15 5C15 5.12548 15.0077 5.24917 15.0227 5.37061L8.08261 9.18789C7.54305 8.46374 6.7914 8 5.93426 8C4.31055 8 3 9.34315 3 11C3 12.6569 4.31055 14 5.93426 14C6.7914 14 7.54305 13.5363 8.08261 12.8121L15.0227 16.6294C15.0077 16.7508 15 16.8745 15 17C15 18.6569 16.3431 20 18 20C19.6569 20 21 18.6569 21 17C21 15.3431 19.6569 14 18 14C17.1429 14 16.3912 14.4637 15.8517 15.1879L8.91165 11.3706C8.92664 11.2492 8.93426 11.1255 8.93426 11C8.93426 10.8745 8.92664 10.7508 8.91165 10.6294L15.8517 6.81214C16.3912 7.53629 17.1429 8 18 8Z" fill="currentColor"/>
+            </svg>
+        </button>
     </div>
 
     <div id="admin-section" class="hidden">
@@ -58,7 +68,9 @@
 
     <div id="user-section">
         <div class="vote-container">
-            <h2 id="currentQuestion"></h2>
+            <div class="header-container">
+                <h2 id="currentQuestion">국민의 힘 대통령후보는 누가 될까요?</h2>
+            </div>
             <div class="vote-period-container">
                 <div class="vote-period-label">투표기간</div>
                 <div id="votePeriod" class="vote-period"></div>
@@ -99,6 +111,7 @@
             <div class="button-container">
                 <button class="previous-votes-btn" onclick="showPreviousVotes()">이전투표</button>
                 <button class="upcoming-votes-btn" onclick="showUpcomingVotes()">향후투표일정</button>
+                <button class="vote-request-btn" onclick="showVoteRequest()">투표신청</button>
             </div>
         </div>
     </div>
@@ -222,5 +235,61 @@
             <button class="close-btn" onclick="closeUpcomingVotes()">닫기</button>
         </div>
     </div>
+
+    <!-- Add vote request modal -->
+    <div id="voteRequestModal" class="modal hidden">
+        <div class="modal-content">
+            <h2>투표 신청</h2>
+            <form id="voteRequestForm">
+                <div class="form-group">
+                    <label for="requestTitle">투표 제목:</label>
+                    <input type="text" id="requestTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="requestOptionA">선택지 A:</label>
+                    <input type="text" id="requestOptionA" required>
+                </div>
+                <div class="form-group">
+                    <label for="requestOptionB">선택지 B:</label>
+                    <input type="text" id="requestOptionB" required>
+                </div>
+                <div class="form-group">
+                    <label for="requestRegisterId">등록ID:</label>
+                    <input type="text" id="requestRegisterId" required>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="submit-button">신청하기</button>
+                    <button type="button" onclick="closeVoteRequest()" class="cancel-button">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 공유 모달 -->
+    <div id="shareModal" class="share-modal hidden">
+        <div class="share-modal-content">
+            <button class="share-modal-close" onclick="closeShareModal()">&times;</button>
+            <div class="share-options">
+                <button class="share-option kakao" onclick="shareToKakao()">
+                    <img src="kakao.png" alt="카카오톡">
+                    <span>카카오톡</span>
+                </button>
+                <button class="share-option facebook" onclick="shareToFacebook()">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%234267B2' d='M12 0C5.37 0 0 5.37 0 12c0 5.99 4.38 10.95 10.12 11.85v-8.38H7.08V12h3.04V9.36c0-3.01 1.79-4.67 4.53-4.67 1.31 0 2.68.23 2.68.23v2.95h-1.51c-1.49 0-1.96.93-1.96 1.88V12h3.33l-.53 3.47h-2.8v8.38C19.62 22.95 24 17.99 24 12c0-6.63-5.37-12-12-12z'/%3E%3C/svg%3E" alt="페이스북">
+                    <span>페이스북</span>
+                </button>
+                <button class="share-option twitter" onclick="shareToTwitter()">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%231DA1F2' d='M23.643 4.937c-.835.37-1.732.62-2.675.733.962-.576 1.7-1.49 2.048-2.578-.9.534-1.897.922-2.958 1.13-.85-.904-2.06-1.47-3.4-1.47-2.572 0-4.658 2.086-4.658 4.66 0 .364.042.718.12 1.06-3.873-.195-7.304-2.05-9.602-4.868-.4.69-.63 1.49-.63 2.342 0 1.616.823 3.043 2.072 3.878-.764-.025-1.482-.234-2.11-.583v.06c0 2.257 1.605 4.14 3.737 4.568-.392.106-.803.162-1.227.162-.3 0-.593-.028-.877-.082.593 1.85 2.313 3.198 4.352 3.234-1.595 1.25-3.604 1.995-5.786 1.995-.376 0-.747-.022-1.112-.065 2.062 1.323 4.51 2.093 7.14 2.093 8.57 0 13.255-7.098 13.255-13.254 0-.2-.005-.402-.014-.602.91-.658 1.7-1.477 2.323-2.41z'/%3E%3C/svg%3E" alt="트위터">
+                    <span>트위터</span>
+                </button>
+                <button class="share-option gmail" onclick="shareToGmail()">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23EA4335' d='M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z'/%3E%3C/svg%3E" alt="Gmail">
+                    <span>Gmail</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="share.js"></script>
 </body>
 </html>

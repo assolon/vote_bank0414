@@ -253,7 +253,7 @@ async function loadVoteList() {
 
     try {
         const snapshot = await db.collection('votes')
-            .orderBy('startTime', 'desc')
+            .orderBy('createdAt', 'desc')
             .get();
         
         const now = new Date();
@@ -262,36 +262,53 @@ async function loadVoteList() {
             const vote = doc.data();
             const row = document.createElement('tr');
             
-            const startTime = vote.startTime.toDate();
-            const endTime = vote.status === 'ended' && vote.endedAt ? vote.endedAt.toDate() : vote.endTime.toDate();
-            
-            // 상태 확인
-            let status;
+            // 상태 및 기간 설정
+            let status = vote.status;
+            let periodDisplay = '';
             let actionButtons = '';
             
-            if (vote.status === 'ended') {
-                status = '종료됨';
-                actionButtons = `<button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>`;
-            } else if (now < startTime) {
-                status = '대기중';
+            if (status === '신청') {
+                // 신청 상태일 때
+                periodDisplay = '노출기간 미설정';
                 actionButtons = `
                     <button onclick="editVote('${doc.id}')" class="edit-btn">수정</button>
                     <button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>
                 `;
-            } else if (now > endTime) {
-                status = '종료됨';
-                actionButtons = `<button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>`;
-                // 자동으로 상태 업데이트
-                db.collection('votes').doc(doc.id).update({ 
-                    status: 'ended',
-                    endedAt: firebase.firestore.Timestamp.fromDate(endTime)
-                });
             } else {
-                status = '진행중';
-                actionButtons = `
-                    <button onclick="endVote('${doc.id}')" class="end-vote-btn">종료</button>
-                    <button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>
-                `;
+                // 기존 상태 처리
+                const startTime = vote.startTime ? vote.startTime.toDate() : null;
+                const endTime = vote.status === 'ended' && vote.endedAt ? 
+                    vote.endedAt.toDate() : 
+                    (vote.endTime ? vote.endTime.toDate() : null);
+
+                if (startTime && endTime) {
+                    periodDisplay = `${formatDateTime(startTime)} ~ ${formatDateTime(endTime)}`;
+                    
+                    if (vote.status === 'ended') {
+                        status = '종료됨';
+                        actionButtons = `<button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>`;
+                    } else if (now < startTime) {
+                        status = '대기중';
+                        actionButtons = `
+                            <button onclick="editVote('${doc.id}')" class="edit-btn">수정</button>
+                            <button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>
+                        `;
+                    } else if (now > endTime) {
+                        status = '종료됨';
+                        actionButtons = `<button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>`;
+                        // 자동으로 상태 업데이트
+                        db.collection('votes').doc(doc.id).update({ 
+                            status: 'ended',
+                            endedAt: firebase.firestore.Timestamp.fromDate(endTime)
+                        });
+                    } else {
+                        status = '진행중';
+                        actionButtons = `
+                            <button onclick="endVote('${doc.id}')" class="end-vote-btn">종료</button>
+                            <button onclick="deleteVote('${doc.id}')" class="delete-btn">삭제</button>
+                        `;
+                    }
+                }
             }
 
             const leftVotes = vote.votesA || 0;
@@ -299,14 +316,13 @@ async function loadVoteList() {
             let leftPercentage = calculatePercentage(leftVotes, rightVotes);
             let rightPercentage = 100 - leftPercentage;
             
-            // 결과 셀 스타일링을 위한 클래스 추가
             const leftResultClass = leftPercentage > rightPercentage ? 'winning-result' : '';
             const rightResultClass = rightPercentage > leftPercentage ? 'winning-result' : '';
             
             row.innerHTML = `
                 <td>
                     <div class="vote-title">${vote.question}</div>
-                    <div class="vote-period-admin">${formatDateTime(startTime)} ~ ${formatDateTime(endTime)}</div>
+                    <div class="vote-period-admin">${periodDisplay}</div>
                 </td>
                 <td>${vote.optionA}</td>
                 <td>${vote.optionB}</td>
@@ -324,7 +340,6 @@ async function loadVoteList() {
             if (status === '종료됨') {
                 row.style.cursor = 'pointer';
                 row.onclick = (e) => {
-                    // 버튼 클릭 시 상세 정보 표시 방지
                     if (!e.target.closest('button')) {
                         showVoteDetails(doc.id);
                     }
@@ -474,7 +489,15 @@ async function loadCurrentVote() {
             
             // 결과 그래프 표시
             document.querySelector('.result-graph').classList.remove('hidden');
-            document.querySelector('.result-graph').classList.add('show');
+            setTimeout(() => {
+                document.querySelector('.result-graph').classList.add('show');
+            }, 100);
+
+            // Hide share buttons after voting
+            const shareButtons = document.querySelector('.result-graph .share-buttons');
+            if (shareButtons) {
+                shareButtons.style.display = 'none';
+            }
         }
 
         // 질문과 투표 옵션 업데이트
@@ -637,6 +660,12 @@ async function submitVote() {
             document.querySelector('.result-graph').classList.add('show');
         }, 100);
 
+        // Hide share buttons after voting
+        const shareButtons = document.querySelector('.result-graph .share-buttons');
+        if (shareButtons) {
+            shareButtons.style.display = 'none';
+        }
+
         // 투표 옵션 비활성화
         document.querySelectorAll('.vote-circle').forEach(btn => {
             btn.disabled = true;
@@ -720,11 +749,23 @@ function updateResults(votesA, votesB) {
     const barA = document.getElementById('barA');
     const barB = document.getElementById('barB');
     
-    barA.style.width = `${percentageA}%`;
-    barB.style.width = `${percentageB}%`;
-
-    barA.textContent = `${percentageA}%`;
-    barB.textContent = `${percentageB}%`;
+    // 0%/100% 또는 100%/0%일 때, 0% 막대는 색도 표시하지 않음
+    if (percentageA === 0 && percentageB === 100) {
+        barA.style.width = '0%';
+        barA.textContent = '';
+        barB.style.width = '100%';
+        barB.textContent = '100%';
+    } else if (percentageA === 100 && percentageB === 0) {
+        barA.style.width = '100%';
+        barA.textContent = '100%';
+        barB.style.width = '0%';
+        barB.textContent = '';
+    } else {
+        barA.style.width = `${percentageA}%`;
+        barB.style.width = `${percentageB}%`;
+        barA.textContent = `${percentageA}%`;
+        barB.textContent = `${percentageB}%`;
+    }
 
     // 투표 수 표시 제거
     document.getElementById('countA').textContent = '';
@@ -975,13 +1016,20 @@ async function editVote(voteId) {
         document.getElementById('question').value = vote.question;
         document.getElementById('optionA').value = vote.optionA;
         document.getElementById('optionB').value = vote.optionB;
-        document.getElementById('startTime').value = formatDateTimeForInput(vote.startTime.toDate());
-        document.getElementById('endTime').value = formatDateTimeForInput(vote.endTime.toDate());
+        
+        // 신청 상태인 경우에만 시작/종료 시간 초기화
+        if (vote.status === '신청') {
+            document.getElementById('startTime').value = '';
+            document.getElementById('endTime').value = '';
+        } else {
+            document.getElementById('startTime').value = formatDateTimeForInput(vote.startTime.toDate());
+            document.getElementById('endTime').value = formatDateTimeForInput(vote.endTime.toDate());
+        }
         
         // 저장 버튼의 동작을 수정 모드로 변경
         const saveButton = document.querySelector('.vote-form button');
         saveButton.textContent = '수정';
-        saveButton.onclick = () => updateVote(voteId);
+        saveButton.onclick = () => updateVote(voteId, vote.status === '신청');
     } catch (error) {
         console.error('Error loading vote for edit:', error);
         alert('투표 정보를 불러오는 중 오류가 발생했습니다.');
@@ -1000,42 +1048,60 @@ function formatDateTimeForInput(date) {
 }
 
 // 투표 업데이트 함수
-async function updateVote(voteId) {
+async function updateVote(voteId, isRequest) {
     const question = document.getElementById('question').value;
     const optionA = document.getElementById('optionA').value;
     const optionB = document.getElementById('optionB').value;
     const startTime = document.getElementById('startTime').value;
     const endTime = document.getElementById('endTime').value;
 
-    if (!question || !optionA || !optionB || !startTime || !endTime) {
-        alert('모든 필드를 입력해주세요');
+    if (!question || !optionA || !optionB) {
+        alert('투표 제목과 옵션을 입력해주세요');
         return;
     }
 
-    const start = new Date(startTime);
-    const end = new Date(endTime);
+    // 기본 업데이트 데이터
+    const updateData = {
+        question,
+        optionA,
+        optionB,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
 
-    if (end <= start) {
-        alert('마감일시는 시작일시보다 늦어야 합니다');
+    // 신청 상태에서 노출 기간을 설정하는 경우
+    if (isRequest && startTime && endTime) {
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+
+        if (end <= start) {
+            alert('마감일시는 시작일시보다 늦어야 합니다');
+            return;
+        }
+
+        try {
+            // 다른 투표와의 기간 중복 체크
+            const overlapCheck = await checkPeriodOverlap(startTime, endTime, voteId);
+            if (overlapCheck.overlap) {
+                alert(`다음 기간과 중복됩니다:\n${overlapCheck.existingVote.start} ~ ${overlapCheck.existingVote.end}`);
+                return;
+            }
+
+            // 노출 기간 설정 시 상태를 '대기중'으로 변경
+            updateData.startTime = firebase.firestore.Timestamp.fromDate(start);
+            updateData.endTime = firebase.firestore.Timestamp.fromDate(end);
+            updateData.status = 'waiting';
+        } catch (error) {
+            console.error('Error checking period overlap:', error);
+            alert('기간 중복 확인 중 오류가 발생했습니다');
+            return;
+        }
+    } else if (!isRequest && (!startTime || !endTime)) {
+        alert('노출 기간을 설정해주세요');
         return;
     }
 
     try {
-        // 다른 투표와의 기간 중복 체크
-        const overlapCheck = await checkPeriodOverlap(startTime, endTime, voteId);
-        if (overlapCheck.overlap) {
-            alert(`다음 기간과 중복됩니다:\n${overlapCheck.existingVote.start} ~ ${overlapCheck.existingVote.end}`);
-            return;
-        }
-
-        await db.collection('votes').doc(voteId).update({
-            question,
-            optionA,
-            optionB,
-            startTime: firebase.firestore.Timestamp.fromDate(start),
-            endTime: firebase.firestore.Timestamp.fromDate(end),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await db.collection('votes').doc(voteId).update(updateData);
 
         // 폼 초기화 및 버튼 상태 복구
         clearAdminForm();
@@ -1119,4 +1185,100 @@ async function showUpcomingVotes() {
 // 향후 투표 일정 모달 닫기
 function closeUpcomingVotes() {
     document.getElementById('upcomingVotesModal').classList.add('hidden');
+}
+
+// 투표 신청 모달 표시
+function showVoteRequest() {
+    const modal = document.getElementById('voteRequestModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+}
+
+// 투표 신청 모달 닫기
+function closeVoteRequest() {
+    const modal = document.getElementById('voteRequestModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        document.getElementById('voteRequestForm').reset();
+    }
+}
+
+// 투표 신청 처리
+document.getElementById('voteRequestForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const requestData = {
+        question: document.getElementById('requestTitle').value,
+        optionA: document.getElementById('requestOptionA').value,
+        optionB: document.getElementById('requestOptionB').value,
+        registerId: document.getElementById('requestRegisterId').value,
+        status: '신청',
+        votesA: 0,
+        votesB: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+
+    try {
+        await db.collection('votes').add(requestData);
+        alert('투표가 성공적으로 신청되었습니다.');
+        closeVoteRequest();
+        if (isAdmin) {
+            loadVoteList();
+        }
+    } catch (error) {
+        console.error('Error submitting vote request:', error);
+        alert('투표 신청 중 오류가 발생했습니다.');
+    }
+});
+
+// KakaoTalk Share
+function shareKakao() {
+    // Check if Kakao SDK is loaded
+    if (typeof Kakao === 'undefined') {
+        alert('카카오톡 공유 기능을 사용할 수 없습니다.');
+        return;
+    }
+
+    Kakao.Link.sendDefault({
+        objectType: 'feed',
+        content: {
+            title: '투표해주세요!',
+            description: '당신의 선택은?',
+            imageUrl: 'YOUR_IMAGE_URL', // Replace with your image URL
+            link: {
+                mobileWebUrl: window.location.href,
+                webUrl: window.location.href,
+            },
+        },
+        buttons: [
+            {
+                title: '투표하러 가기',
+                link: {
+                    mobileWebUrl: window.location.href,
+                    webUrl: window.location.href,
+                },
+            },
+        ],
+    });
+}
+
+// Facebook Share
+function shareFacebook() {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+}
+
+// Twitter/X Share
+function shareTwitter() {
+    const text = encodeURIComponent('투표해주세요!');
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+}
+
+// Instagram Share (Note: Direct sharing to Instagram feed is not possible via web API)
+function shareInstagram() {
+    alert('Instagram 공유는 모바일 앱에서만 가능합니다.');
 }
