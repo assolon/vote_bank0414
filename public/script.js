@@ -2,7 +2,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyAR8ghUYNf6X3qFByRoc3oB9awTViBGHfM",
     authDomain: "vote-bank0414.firebaseapp.com",
-    projectId: "vote-bank0414",
+    projectId: "vote-bank0413-7027d",
     storageBucket: "vote-bank0414.firebasestorage.app",
     messagingSenderId: "807287894593",
     appId: "1:807287894593:web:3ee2544444617cf5338cc0",

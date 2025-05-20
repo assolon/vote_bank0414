@@ -109,6 +109,12 @@ function getCurrentVoteData() {
 // Event listeners for share buttons
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize event listeners for share buttons
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) {
+        shareBtn.addEventListener('click', function() {
+            // 기존 공유 로직
+        });
+    }
     document.getElementById('kakaoShare').addEventListener('click', shareToKakao);
     document.getElementById('facebookShare').addEventListener('click', shareToFacebook);
     document.getElementById('twitterShare').addEventListener('click', shareToTwitter);

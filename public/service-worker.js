@@ -33,6 +33,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    if (event.request.method === 'POST') {
+        return;
+    }
     event.respondWith(
         caches.match(event.request).then((response) => {
             // 항상 네트워크 요청을 먼저 시도
