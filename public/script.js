@@ -196,8 +196,8 @@ async function checkPeriodOverlap(startTime, endTime, currentVoteId = null) {
             if (currentVoteId && doc.id === currentVoteId) continue;
             
             const vote = doc.data();
-            const existingStart = vote.startTime.toDate();
-            const existingEnd = vote.endTime.toDate();
+            const existingStart = vote.startTime ? vote.startTime.toDate() : null;
+            const existingEnd = vote.endTime ? vote.endTime.toDate() : null;
             
             // 기간 중복 체크
             if (
@@ -447,7 +447,11 @@ async function loadCurrentVote() {
         const sortedDocs = snapshot.docs
             .map(doc => ({ id: doc.id, data: doc.data() }))
             .filter(doc => doc.data.status !== 'ended')
-            .sort((a, b) => a.data.startTime.toDate() - b.data.startTime.toDate());
+            .sort((a, b) => {
+                const aStart = a.data.startTime ? a.data.startTime.toDate() : 0;
+                const bStart = b.data.startTime ? b.data.startTime.toDate() : 0;
+                return aStart - bStart;
+            });
 
         for (const doc of sortedDocs) {
             const data = doc.data;
@@ -826,7 +830,7 @@ async function showPreviousVotes() {
 
         snapshot.forEach(doc => {
             const vote = doc.data();
-            const exposureTime = vote.startTime.toDate();
+            const exposureTime = vote.startTime ? vote.startTime.toDate() : null;
             const endTime = vote.endTime.toDate();
 
             // 종료된 투표만 표시
